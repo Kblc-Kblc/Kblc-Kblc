@@ -181,6 +181,163 @@ let sliderAbout = new Swiper('.certificate__row', {
 function email_test(input) {
 	return !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,8})+$/.test(input.value);
 }
+
+"use strict";
+
+
+function DynamicAdapt(type) {
+	this.type = type;
+}
+
+DynamicAdapt.prototype.init = function () {
+	const _this = this;
+	// массив объектов
+	this.оbjects = [];
+	this.daClassname = "_dynamic_adapt_";
+	// массив DOM-элементов
+	this.nodes = document.querySelectorAll("[data-da]");
+
+	// наполнение оbjects объктами
+	for (let i = 0; i < this.nodes.length; i++) {
+		const node = this.nodes[i];
+		const data = node.dataset.da.trim();
+		const dataArray = data.split(",");
+		const оbject = {};
+		оbject.element = node;
+		оbject.parent = node.parentNode;
+		оbject.destination = document.querySelector(dataArray[0].trim());
+		оbject.breakpoint = dataArray[1] ? dataArray[1].trim() : "767";
+		оbject.place = dataArray[2] ? dataArray[2].trim() : "last";
+		оbject.index = this.indexInParent(оbject.parent, оbject.element);
+		this.оbjects.push(оbject);
+	}
+
+	this.arraySort(this.оbjects);
+
+	// массив уникальных медиа-запросов
+	this.mediaQueries = Array.prototype.map.call(this.оbjects, function (item) {
+		return '(' + this.type + "-width: " + item.breakpoint + "px)," + item.breakpoint;
+	}, this);
+	this.mediaQueries = Array.prototype.filter.call(this.mediaQueries, function (item, index, self) {
+		return Array.prototype.indexOf.call(self, item) === index;
+	});
+
+	// навешивание слушателя на медиа-запрос
+	// и вызов обработчика при первом запуске
+	for (let i = 0; i < this.mediaQueries.length; i++) {
+		const media = this.mediaQueries[i];
+		const mediaSplit = String.prototype.split.call(media, ',');
+		const matchMedia = window.matchMedia(mediaSplit[0]);
+		const mediaBreakpoint = mediaSplit[1];
+
+		// массив объектов с подходящим брейкпоинтом
+		const оbjectsFilter = Array.prototype.filter.call(this.оbjects, function (item) {
+			return item.breakpoint === mediaBreakpoint;
+		});
+		matchMedia.addListener(function () {
+			_this.mediaHandler(matchMedia, оbjectsFilter);
+		});
+		this.mediaHandler(matchMedia, оbjectsFilter);
+	}
+};
+
+DynamicAdapt.prototype.mediaHandler = function (matchMedia, оbjects) {
+	if (matchMedia.matches) {
+		for (let i = 0; i < оbjects.length; i++) {
+			const оbject = оbjects[i];
+			оbject.index = this.indexInParent(оbject.parent, оbject.element);
+			this.moveTo(оbject.place, оbject.element, оbject.destination);
+		}
+	} else {
+		for (let i = 0; i < оbjects.length; i++) {
+			const оbject = оbjects[i];
+			if (оbject.element.classList.contains(this.daClassname)) {
+				this.moveBack(оbject.parent, оbject.element, оbject.index);
+			}
+		}
+	}
+};
+
+// Функция перемещения
+DynamicAdapt.prototype.moveTo = function (place, element, destination) {
+	element.classList.add(this.daClassname);
+	if (place === 'last' || place >= destination.children.length) {
+		destination.insertAdjacentElement('beforeend', element);
+		return;
+	}
+	if (place === 'first') {
+		destination.insertAdjacentElement('afterbegin', element);
+		return;
+	}
+	destination.children[place].insertAdjacentElement('beforebegin', element);
+}
+
+// Функция возврата
+DynamicAdapt.prototype.moveBack = function (parent, element, index) {
+	element.classList.remove(this.daClassname);
+	if (parent.children[index] !== undefined) {
+		parent.children[index].insertAdjacentElement('beforebegin', element);
+	} else {
+		parent.insertAdjacentElement('beforeend', element);
+	}
+}
+
+// Функция получения индекса внутри родителя
+DynamicAdapt.prototype.indexInParent = function (parent, element) {
+	const array = Array.prototype.slice.call(parent.children);
+	return Array.prototype.indexOf.call(array, element);
+};
+
+// Функция сортировки массива по breakpoint и place 
+// по возрастанию для this.type = min
+// по убыванию для this.type = max
+DynamicAdapt.prototype.arraySort = function (arr) {
+	if (this.type === "min") {
+		Array.prototype.sort.call(arr, function (a, b) {
+			if (a.breakpoint === b.breakpoint) {
+				if (a.place === b.place) {
+					return 0;
+				}
+
+				if (a.place === "first" || b.place === "last") {
+					return -1;
+				}
+
+				if (a.place === "last" || b.place === "first") {
+					return 1;
+				}
+
+				return a.place - b.place;
+			}
+
+			return a.breakpoint - b.breakpoint;
+		});
+	} else {
+		Array.prototype.sort.call(arr, function (a, b) {
+			if (a.breakpoint === b.breakpoint) {
+				if (a.place === b.place) {
+					return 0;
+				}
+
+				if (a.place === "first" || b.place === "last") {
+					return 1;
+				}
+
+				if (a.place === "last" || b.place === "first") {
+					return -1;
+				}
+
+				return b.place - a.place;
+			}
+
+			return b.breakpoint - a.breakpoint;
+		});
+		return;
+	}
+};
+
+const da = new DynamicAdapt("max");
+da.init();
 $(function () {
    $(window).on("scroll resize", function () {
       var o = $(window).scrollTop() / ($(document).height() - $(window).height());
@@ -314,30 +471,7 @@ function body_lock_add(delay) {
 }
 //=================
 
-// LettersAnimation
-let title = document.querySelectorAll('._letter-animation');
-if (title) {
-	for (let index = 0; index < title.length; index++) {
-		let el = title[index];
-		let txt = el.innerHTML;
-		let txt_words = txt.replace('  ', ' ').split(' ');
-		let new_title = '';
-		for (let index = 0; index < txt_words.length; index++) {
-			let txt_word = txt_words[index];
-			let len = txt_word.length;
-			new_title = new_title + '<p>';
-			for (let index = 0; index < len; index++) {
-				let it = txt_word.substr(index, 1);
-				if (it == ' ') {
-					it = '&nbsp;';
-				}
-				new_title = new_title + '<span>' + it + '</span>';
-			}
-			el.innerHTML = new_title;
-			new_title = new_title + '&nbsp;</p>';
-		}
-	}
-}
+
 //=================
 //Tabs
 let tabs = document.querySelectorAll("._tabs");
@@ -396,39 +530,8 @@ if (spollers.length > 0) {
 	}
 }
 //=================
-//Gallery
-let gallery = document.querySelectorAll('._gallery');
-if (gallery) {
-	gallery_init();
-}
-function gallery_init() {
-	for (let index = 0; index < gallery.length; index++) {
-		const el = gallery[index];
-		lightGallery(el, {
-			counter: false,
-			selector: 'a',
-			download: false
-		});
-	}
-}
-//=================
-//SearchInList
-function search_in_list(input) {
-	let ul = input.parentNode.querySelector('ul')
-	let li = ul.querySelectorAll('li');
-	let filter = input.value.toUpperCase();
 
-	for (i = 0; i < li.length; i++) {
-		let el = li[i];
-		let item = el;
-		txtValue = item.textContent || item.innerText;
-		if (txtValue.toUpperCase().indexOf(filter) > -1) {
-			el.style.display = "";
-		} else {
-			el.style.display = "none";
-		}
-	}
-}
+
 //=================
 //DigiFormat
 function digi(str) {
@@ -480,84 +583,7 @@ function digi_animate_value(el, start, end, duration) {
 	el.classList.add('_done');
 }
 //=================
-//Popups
-let popup_link = document.querySelectorAll('._popup-link');
-let popups = document.querySelectorAll('.popup');
-for (let index = 0; index < popup_link.length; index++) {
-	const el = popup_link[index];
-	el.addEventListener('click', function (e) {
-		if (unlock) {
-			let item = el.getAttribute('href').replace('#', '');
-			let video = el.getAttribute('data-video');
-			popup_open(item, video);
-		}
-		e.preventDefault();
-	})
-}
-for (let index = 0; index < popups.length; index++) {
-	const popup = popups[index];
-	popup.addEventListener("click", function (e) {
-		if (!e.target.closest('.popup__body')) {
-			popup_close(e.target.closest('.popup'));
-		}
-	});
-}
-function popup_open(item, video = '') {
-	let activePopup = document.querySelectorAll('.popup._active');
-	if (activePopup.length > 0) {
-		popup_close('', false);
-	}
-	let curent_popup = document.querySelector('.popup_' + item);
-	if (curent_popup && unlock) {
-		if (video != '' && video != null) {
-			let popup_video = document.querySelector('.popup_video');
-			popup_video.querySelector('.popup__video').innerHTML = '<iframe src="https://www.youtube.com/embed/' + video + '?autoplay=1"  allow="autoplay; encrypted-media" allowfullscreen></iframe>';
-		}
-		if (!document.querySelector('.menu__body._active')) {
-			body_lock_add(500);
-		}
-		curent_popup.classList.add('_active');
-		history.pushState('', '', '#' + item);
-	}
-}
-function popup_close(item, bodyUnlock = true) {
-	if (unlock) {
-		if (!item) {
-			for (let index = 0; index < popups.length; index++) {
-				const popup = popups[index];
-				let video = popup.querySelector('.popup__video');
-				if (video) {
-					video.innerHTML = '';
-				}
-				popup.classList.remove('_active');
-			}
-		} else {
-			let video = item.querySelector('.popup__video');
-			if (video) {
-				video.innerHTML = '';
-			}
-			item.classList.remove('_active');
-		}
-		if (!document.querySelector('.menu__body._active') && bodyUnlock) {
-			body_lock_remove(500);
-		}
-		history.pushState('', '', window.location.href.split('#')[0]);
-	}
-}
-let popup_close_icon = document.querySelectorAll('.popup__close,._popup-close');
-if (popup_close_icon) {
-	for (let index = 0; index < popup_close_icon.length; index++) {
-		const el = popup_close_icon[index];
-		el.addEventListener('click', function () {
-			popup_close(el.closest('.popup'));
-		})
-	}
-}
-document.addEventListener('keydown', function (e) {
-	if (e.code === 'Escape') {
-		popup_close();
-	}
-});
+
 //=================
 //SlideToggle
 let _slideUp = (target, duration = 500) => {
@@ -643,78 +669,7 @@ function _is_hidden(el) {
 	return (el.offsetParent === null)
 }
 //========================================
-//Animate
-function animate({ timing, draw, duration }) {
-	let start = performance.now();
-	requestAnimationFrame(function animate(time) {
-		// timeFraction изменяется от 0 до 1
-		let timeFraction = (time - start) / duration;
-		if (timeFraction > 1) timeFraction = 1;
 
-		// вычисление текущего состояния анимации
-		let progress = timing(timeFraction);
-
-		draw(progress); // отрисовать её
-
-		if (timeFraction < 1) {
-			requestAnimationFrame(animate);
-		}
-
-	});
-}
-function makeEaseOut(timing) {
-	return function (timeFraction) {
-		return 1 - timing(1 - timeFraction);
-	}
-}
-function makeEaseInOut(timing) {
-	return function (timeFraction) {
-		if (timeFraction < .5)
-			return timing(2 * timeFraction) / 2;
-		else
-			return (2 - timing(2 * (1 - timeFraction))) / 2;
-	}
-}
-function quad(timeFraction) {
-	return Math.pow(timeFraction, 2)
-}
-function circ(timeFraction) {
-	return 1 - Math.sin(Math.acos(timeFraction));
-}
-/*
-animate({
-	duration: 1000,
-	timing: makeEaseOut(quad),
-	draw(progress) {
-		window.scroll(0, start_position + 400 * progress);
-	}
-});*/
-
-//Полифилы
-(function () {
-	// проверяем поддержку
-	if (!Element.prototype.closest) {
-		// реализуем
-		Element.prototype.closest = function (css) {
-			var node = this;
-			while (node) {
-				if (node.matches(css)) return node;
-				else node = node.parentElement;
-			}
-			return null;
-		};
-	}
-})();
-(function () {
-	// проверяем поддержку
-	if (!Element.prototype.matches) {
-		// определяем свойство
-		Element.prototype.matches = Element.prototype.matchesSelector ||
-			Element.prototype.webkitMatchesSelector ||
-			Element.prototype.mozMatchesSelector ||
-			Element.prototype.msMatchesSelector;
-	}
-})();
 //let btn = document.querySelectorAll('button[type="submit"],input[type="submit"]');
 let forms = document.querySelectorAll('form');
 if (forms.length > 0) {
@@ -1045,25 +1000,25 @@ function inputs_init(inputs) {
 				if (input.getAttribute('data-type') === "pass") {
 					input.setAttribute('type', 'password');
 				}
-				if (input.classList.contains('_date1')) {
-
-					input.classList.add('_mask1');
+				if (input.classList.contains('_date')) {
+					/*
+					input.classList.add('_mask');
 					Inputmask("99.99.9999", {
-						//"placeholder": '99.99.9999',
+						//"placeholder": '',
 						clearIncomplete: true,
 						clearMaskOnLostFocus: true,
 						onincomplete: function () {
 							input_clear_mask(input, input_g_value);
 						}
 					}).mask(input);
-
+					*/
 				}
 				if (input.classList.contains('_phone')) {
 					//'+7(999) 999 9999'
 					//'+38(999) 999 9999'
 					//'+375(99)999-99-99'
 					input.classList.add('_mask');
-					Inputmask('+7(999) 999 9999', {
+					Inputmask("+7(999) 999 9999", {
 						//"placeholder": '',
 						clearIncomplete: true,
 						clearMaskOnLostFocus: true,

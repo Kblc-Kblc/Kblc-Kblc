@@ -1795,6 +1795,7 @@ progress::-moz-progress-bar {
   .header-bottom__nav._active {
     opacity: 1;
     visibility: visible;
+    padding: 170px 0px 0px 0px;
   }
 
   .header-bottom__list {
@@ -1802,7 +1803,7 @@ progress::-moz-progress-bar {
   }
 
   .header-bottom__list li {
-    padding: 0px 0px 30px 0px;
+    padding: 0px 0px 15px 0px;
     font-family: "Gilroy-Black";
   }
 
