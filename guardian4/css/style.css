@@ -1298,20 +1298,6 @@ body.ie ._ibg img {
 .footer {
   background-color: #565656;
   padding: 55px 0px 0px 0px;
-  -webkit-transform: translate(0px, 80px);
-      -ms-transform: translate(0px, 80px);
-          transform: translate(0px, 80px);
-  opacity: 0;
-  -webkit-transition: all 0.3s ease 0s;
-  -o-transition: all 0.3s ease 0s;
-  transition: all 0.3s ease 0s;
-}
-
-.footer._active {
-  -webkit-transform: translate(0px, 0px);
-      -ms-transform: translate(0px, 0px);
-          transform: translate(0px, 0px);
-  opacity: 1;
 }
 
 .footer__row {
