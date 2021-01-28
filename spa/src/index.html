@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" type="text/css" href="assets/scss/main.scss" />
+  <meta charset="UTF-8">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue</title>
+</head>
+
+<body>
+  <div class="wrapper">
+    <main class="page">
+      <div id="app">
+        <loading-screen v-if="isLoading"></loading-screen>
+        <example-component></example-component>
+        <transition name="fade" mode="out-in">
+          <router-view></router-view>
+        </transition>
+      </div>
+    </main>
+  </div>
+</body>
+
+</html>
