@@ -1,7 +1,0 @@
-@function rem($px) {
-  @return ($px / 16) +rem;
-}
-
-@function calcsum($x, $y) {
-  @return ($x + $y) + px;
-}
